@@ -1,0 +1,203 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-border: var(--border);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --font-sans: var(--font-sans-stack);
+  --font-serif: var(--font-serif-stack);
+  --font-mono: "SFMono-Regular", Consolas, monospace;
+}
+
+:root {
+  color-scheme: light;
+  --background: #f6f3ea;
+  --foreground: #17171a;
+  --surface: #f9f6ef;
+  --surface-2: #efe8d8;
+  --border: rgba(23, 23, 26, 0.1);
+  --muted: #6f6b63;
+  --accent: #8a5f13;
+  --accent-soft: rgba(138, 95, 19, 0.12);
+
+  --font-sans-stack: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", system-ui, sans-serif;
+  --font-serif-stack: "Iowan Old Style", "Palatino Linotype", "URW Palladio L", Georgia, ui-serif, serif;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --background: #0a0a0b;
+  --foreground: #f3f1eb;
+  --surface: #131315;
+  --surface-2: #1a1a1d;
+  --border: rgba(243, 241, 235, 0.09);
+  --muted: #8d8b85;
+  --accent: #c9a24c;
+  --accent-soft: rgba(201, 162, 76, 0.14);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans-stack);
+  overflow-x: hidden;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .font-display {
+    font-family: var(--font-serif-stack);
+  }
+
+  .glass {
+    border: 1px solid var(--border);
+    background: var(--surface);
+    backdrop-filter: blur(24px);
+  }
+
+  .card-surface {
+    background: var(--surface);
+    border: 1px solid var(--border);
+  }
+
+  .accent-text {
+    color: var(--accent);
+  }
+
+  .accent-bg {
+    background: var(--accent);
+  }
+
+  /* Subtle single-tone vignette used sparingly — replaces heavy multi-color mesh blobs */
+  .vignette {
+    background: radial-gradient(120% 90% at 50% -10%, rgba(201, 162, 76, 0.06) 0%, transparent 60%);
+  }
+
+  .divider-line {
+    background: linear-gradient(90deg, transparent, var(--border), transparent);
+  }
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-up {
+  animation: fade-up 0.5s ease forwards;
+}
+
+/* Minimal markdown styling for RawMind chat responses */
+.prose-chat p {
+  margin: 0 0 0.6em;
+}
+
+.prose-chat p:last-child {
+  margin-bottom: 0;
+}
+
+.prose-chat h1,
+.prose-chat h2,
+.prose-chat h3 {
+  font-family: var(--font-serif-stack);
+  margin: 0.8em 0 0.4em;
+  line-height: 1.25;
+}
+
+.prose-chat h1 {
+  font-size: 1.25rem;
+}
+
+.prose-chat h2 {
+  font-size: 1.1rem;
+}
+
+.prose-chat h3 {
+  font-size: 1rem;
+}
+
+.prose-chat ul,
+.prose-chat ol {
+  margin: 0.4em 0 0.6em;
+  padding-left: 1.25em;
+}
+
+.prose-chat li {
+  margin: 0.2em 0;
+}
+
+.prose-chat code {
+  background: rgba(255, 255, 255, 0.08);
+  padding: 0.15em 0.4em;
+  border-radius: 0.3em;
+  font-size: 0.85em;
+  font-family: var(--font-mono);
+}
+
+.prose-chat pre {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--border);
+  border-radius: 0.6em;
+  padding: 0.8em 1em;
+  overflow-x: auto;
+  margin: 0.6em 0;
+}
+
+.prose-chat pre code {
+  background: none;
+  padding: 0;
+}
+
+.prose-chat a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.prose-chat blockquote {
+  border-left: 2px solid var(--accent);
+  padding-left: 0.8em;
+  margin: 0.6em 0;
+  color: var(--muted);
+}
+
+.prose-chat table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.6em 0;
+  font-size: 0.85em;
+}
+
+.prose-chat th,
+.prose-chat td {
+  border: 1px solid var(--border);
+  padding: 0.4em 0.6em;
+  text-align: left;
+}
+
+.prose-chat hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 0.8em 0;
+}

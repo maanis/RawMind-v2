@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:7.0
+    container_name: mindscroll-mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME:-mindscroll}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:-mindscroll_secret}
+      MONGO_INITDB_DATABASE: ${MONGO_APP_DB:-mindscroll}
+      MONGO_APP_DB: ${MONGO_APP_DB:-mindscroll}
+      MONGO_APP_USERNAME: ${MONGO_APP_USERNAME:-mindscroll_app}
+      MONGO_APP_PASSWORD: ${MONGO_APP_PASSWORD:-mindscroll_app_secret}
+    volumes:
+      - mongo_data:/data/db
+      - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+
+  mongo-express:
+    image: mongo-express:latest
+    container_name: mindscroll-mongo-ui
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: ${MONGO_ROOT_USERNAME:-mindscroll}
+      ME_CONFIG_MONGODB_ADMINPASSWORD: ${MONGO_ROOT_PASSWORD:-mindscroll_secret}
+      ME_CONFIG_MONGODB_URL: mongodb://${MONGO_ROOT_USERNAME:-mindscroll}:${MONGO_ROOT_PASSWORD:-mindscroll_secret}@mongodb:27017/
+      ME_CONFIG_BASICAUTH: false
+    depends_on:
+      - mongodb
+
+volumes:
+  mongo_data:

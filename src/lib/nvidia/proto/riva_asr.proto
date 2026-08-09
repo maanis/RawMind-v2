@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+package nvidia.riva;
+
+import "riva_audio.proto";
+import "riva_common.proto";
+
+service RivaSpeechRecognition {
+  rpc Recognize(RecognizeRequest) returns (RecognizeResponse);
+}
+
+message RecognitionConfig {
+  AudioEncoding encoding = 1;
+  int32 sample_rate_hertz = 2;
+  string language_code = 3;
+  int32 max_alternatives = 4;
+}
+
+message RecognizeRequest {
+  RecognitionConfig config = 1;
+  bytes audio = 2;
+  RequestId id = 3;
+}
+
+message SpeechRecognitionAlternative {
+  string transcript = 1;
+  float confidence = 2;
+}
+
+message SpeechRecognitionResult {
+  repeated SpeechRecognitionAlternative alternatives = 1;
+}
+
+message RecognizeResponse {
+  repeated SpeechRecognitionResult results = 1;
+  RequestId id = 2;
+}
