@@ -1,16 +1,16 @@
 <div align="center">
-  <img src="public/logo.svg" alt="MindScroll Logo" width="120" height="120" />
-  <h1>MindScroll</h1>
-  <p><strong>Intent-driven, infinitely adaptive short-form video feed.</strong></p>
+  <img src="public/logo.svg" alt="RawMind Logo" width="120" height="120" />
+  <h1>RawMind</h1>
+  <p><strong>An intent-driven AI experience for discovery, conversation, and personalized media.</strong></p>
 
   [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
   [![Next.js 16](https://img.shields.io/badge/Next.js-16-black?logo=next.js)](https://nextjs.org/)
   [![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue?logo=typescript)](https://www.typescriptlang.org/)
-  
+
   <br />
   <p>
     <a href="#sparkles-features">Features</a> •
-    <a href="#rocket-quick-start">Quick Start</a> •
+    <a href="#rocket-getting-started">Getting Started</a> •
     <a href="#gear-architecture">Architecture</a> •
     <a href="#key-environment-variables">Environment</a>
   </p>
@@ -18,117 +18,113 @@
 
 ---
 
-## 🧠 What is MindScroll?
+## 🧠 What is RawMind?
 
-MindScroll reimagines the short-video experience. Instead of an opaque algorithm deciding what you watch, **you set the intent**. 
+RawMind is a Next.js app that brings together two complementary AI experiences:
 
-Type or speak exactly what you want—*"explain quantum computing simply,"* *"calm lo-fi beats,"* or *"high-intensity workout motivation."* MindScroll instantly builds a curated YouTube feed tailored to your prompt. As you watch, it analyzes your engagement signals in real-time, constantly refining and adapting the feed to match your evolving interests.
+- an intent-driven video feed that turns a prompt into a tailored YouTube experience
+- a persona-based chat experience that lets you explore ideas with different styles and tones
 
-**No doom-scrolling. Just mindful, intent-driven discovery.**
-
----
-
-## :sparkles: Features
-
-- **🎯 Intent-Driven Curation**: Describe your mood or learning goal, and let AI build the perfect feed.
-- **🎙️ Voice Input (Optional)**: Seamlessly dictate your intent using NVIDIA Riva gRPC integration.
-- **⚡ Real-Time Adaptation**: The feed evolves dynamically based on what you watch and like.
-- **🧠 AI-Powered Scoring**: Google Gemini analyzes video transcripts, metadata, and intent to rank content intelligently.
-- **🚀 High Performance**: Built on Next.js 16 App Router, styled with Tailwind CSS v4, and animated with Framer Motion.
-- **🛡️ Production Ready**: Includes rate limiting, Upstash Redis caching, MongoDB Atlas integration, and Vercel Cron jobs.
+You can type a prompt, speak it aloud, and let the app build a more relevant stream of content around your intent.
 
 ---
 
-## :rocket: Quick Start
+## ✨ Features
+
+- 🎯 Intent-driven feed curation from text or voice prompts
+- 🗣️ Optional voice input with NVIDIA Riva support
+- 🔄 Adaptive experience that reacts to watch and interaction signals
+- 🧠 Gemini-powered ranking and topic analysis
+- 💬 RawMind persona chat with configurable Ollama-backed models
+- ⚡ Modern Next.js, TypeScript, and Tailwind UI with light and dark mode
+
+---
+
+## 🚀 Getting Started
 
 ### 1. Clone the repository
 ```bash
-git clone https://github.com/sayan365/mindscroll.git
-cd mindscroll
+git clone https://github.com/your-username/rawmind.git
+cd rawmind
 ```
 
 ### 2. Install dependencies
 ```bash
-npm install
+pnpm install
 ```
 
-### 3. Configure Environment Variables
-Copy the example environment file and fill in your keys:
+### 3. Create your environment file
 ```bash
 cp .env.example .env.local
 ```
-*(See the [Environment Variables](#key-environment-variables) section below for required keys).*
+If there is no local example file in your checkout, create `.env.local` manually and add the variables listed below.
 
-### 4. Database Setup (Local)
-If you don't have a MongoDB Atlas cluster yet, you can quickly spin up a local instance using Docker:
+### 4. Start MongoDB locally (optional)
 ```bash
 docker compose up -d
 ```
-*(MongoDB UI will be available at `http://localhost:8081`)*
+This starts the local MongoDB service used by the feed and cron features.
 
-### 5. Start the Development Server
+### 5. Run the app
 ```bash
-npm run dev
+pnpm dev
 ```
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+Open http://localhost:3000 to view the app.
 
 ---
 
-## :key: Environment Variables
+## 🔑 Environment Variables
 
-To run MindScroll, you'll need a few API keys. Check out `.env.example` for detailed instructions.
+Create a `.env.local` file with the values below.
 
 | Variable | Required | Description |
 |:---|:---:|:---|
-| `GEMINI_API_KEY` | ✅ | [Google AI Studio](https://aistudio.google.com/app/apikey) |
-| `YOUTUBE_API_KEY` | ✅ | [Google Cloud Console](https://console.cloud.google.com) (Enable YouTube Data API v3) |
-| `MONGODB_URI` | ✅ | MongoDB connection string (Atlas or Local) |
-| `MONGODB_DB` | ✅ | Database name (e.g., `mindscroll`) |
-| `CRON_SECRET` | ✅ | Secure random string to protect the Vercel cron endpoint |
-| `UPSTASH_REDIS_REST_URL` | ❌ | [Upstash Redis](https://upstash.com/) URL (Falls back to in-memory if empty) |
-| `UPSTASH_REDIS_REST_TOKEN` | ❌ | [Upstash Redis](https://upstash.com/) Token |
+| `GEMINI_API_KEY` | ✅ | Google AI Studio API key for ranking and analysis |
+| `YOUTUBE_API_KEY` | ✅ | YouTube Data API v3 key |
+| `MONGODB_URI` | ✅ | MongoDB connection string |
+| `MONGODB_DB` | ✅ | Database name |
+| `CRON_SECRET` | ✅ | Secret used to protect the cron endpoint |
+| `UPSTASH_REDIS_REST_URL` | ❌ | Optional Upstash Redis URL |
+| `UPSTASH_REDIS_REST_TOKEN` | ❌ | Optional Upstash Redis token |
 | `NVIDIA_API_KEY` | ❌ | Needed for voice transcription |
-| `NEXT_PUBLIC_HAS_NVIDIA`| ❌ | Set to `"true"` to enable the UI mic button |
+| `NEXT_PUBLIC_HAS_NVIDIA` | ❌ | Set to `"true"` to enable the microphone UI |
 
 ---
 
-## :cloud: Deploying to Vercel
+## 🧱 Architecture
 
-MindScroll is optimized for Vercel. 
+RawMind combines a few layers to deliver the experience:
 
-1. Push your repository to GitHub.
-2. Import the project in your Vercel Dashboard.
-3. Add all the required **Environment Variables**.
-4. Make sure to generate a strong `CRON_SECRET` (e.g., `openssl rand -hex 32`) and add it to your Vercel environment variables.
-5. Deploy!
-
-> **Note:** Vercel Cron will automatically trigger `/api/cron/refresh-pools` once per day to keep the video pools fresh, using the `CRON_SECRET` for authentication.
-
----
-
-## :gear: Architecture
-
-MindScroll's backend is a symphony of AI and traditional APIs:
-
-1. **Input:** User submits an intent via text or voice.
-2. **Analysis:** Google Gemini parses the intent, extracting core topic tags and the desired mood.
-3. **Sourcing:** The backend queries the YouTube Data API v3 for relevant videos based on the extracted tags.
-4. **Scoring:** Gemini evaluates and scores the retrieved videos against the user's original intent.
-5. **Storage:** Sessions, signals, and video metadata are persisted in MongoDB Atlas.
-6. **Delivery:** The highly responsive frontend serves the feed, continuously reporting watch/like signals back to the server to refine upcoming content.
+1. Input: the user submits an intent via text or voice.
+2. Analysis: Gemini extracts topics, mood, and relevance cues from the prompt.
+3. Sourcing: the app queries YouTube for candidate videos.
+4. Ranking: Gemini scores the videos against the original intent.
+5. Storage: sessions, signals, and metadata are persisted in MongoDB.
+6. Delivery: the UI presents the feed and the RawMind chat flow in real time.
 
 ---
 
-## :handshake: Contributing
+## 🧪 Scripts
 
-We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details on how to get started, set up your development environment, and submit pull requests.
+```bash
+pnpm dev
+pnpm build
+pnpm lint
+pnpm test
+```
 
 ---
 
-## :scroll: License
+## 🤝 Contributing
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+Contributions are welcome. Please see [CONTRIBUTING.md](CONTRIBUTING.md) for the contribution workflow.
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
 
 <div align="center">
-  <i>Built with ❤️ for mindful media consumption.</i>
+  <i>Built for curious minds and sharper conversations.</i>
 </div>

@@ -4,8 +4,8 @@ import NavShell from "@/components/NavShell";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "MindScroll",
-  description: "Curated video feed and unfiltered persona chat, in one place.",
+  title: "RawMind",
+  description: "Curated video feed and persona chat, in one place.",
 };
 
 export default function RootLayout({
@@ -21,7 +21,7 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body
-        className="bg-[#09090b] text-zinc-100 min-h-screen font-sans selection:bg-white/20 selection:text-white"
+        className="min-h-[100dvh] overflow-x-hidden bg-[#09090b] text-zinc-100 font-sans selection:bg-white/20 selection:text-white"
         suppressHydrationWarning
       >
         <NavShell>{children}</NavShell>

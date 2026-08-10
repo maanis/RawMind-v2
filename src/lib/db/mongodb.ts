@@ -2,7 +2,7 @@ import { MongoClient, Db, Collection, Document } from "mongodb";
 import { FeedSession, FeedSignal, StoredVideo, UserProfile } from "@/lib/feed/types";
 
 const uri = process.env.MONGODB_URI?.trim();
-const dbName = process.env.MONGODB_DB?.trim() || "mindscroll";
+const dbName = process.env.MONGODB_DB?.trim() || "rawmind";
 
 let clientPromise: Promise<MongoClient> | null = null;
 let indexesReadyPromise: Promise<void> | null = null;

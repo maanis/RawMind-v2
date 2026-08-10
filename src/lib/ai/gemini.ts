@@ -127,7 +127,7 @@ export async function generateQueryPlan(
     });
 
     const prompt = `
-You are the query planner for Mindscroll, an intent-first short-video feed.
+You are the query planner for RawMind, an intent-first short-video feed.
 
 User prompt:
 "${userInput}"

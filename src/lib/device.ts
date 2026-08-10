@@ -1,6 +1,6 @@
 "use client";
 
-const DEVICE_KEY = "mindscroll_device_id";
+const DEVICE_KEY = "rawmind_device_id";
 
 export function getDeviceId() {
   const existing = window.localStorage.getItem(DEVICE_KEY);

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Info, Heart, ChevronDown, Search, Zap, Gauge } from "lucide-react";
+import { Info, Heart, ChevronDown, Sparkles, Activity, Target } from "lucide-react";
 import { IntentProfile } from "@/lib/feed/types";
 
 interface Video {
@@ -44,143 +44,176 @@ export default function VideoPlayer({ video, isActive, onSignal, intentProfile }
   };
 
   return (
-    <div className="relative w-full h-full md:max-w-md lg:max-w-lg xl:max-w-2xl md:h-[90vh] md:rounded-[3rem] bg-black overflow-hidden md:shadow-[0_40px_100px_rgba(0,0,0,0.8)] snap-center flex-shrink-0 transition-transform duration-700 selection:bg-white selection:text-black">
-      
+    <div className="relative w-full h-full bg-black overflow-hidden selection:bg-white/20 selection:text-white">
+
       {/* Video Content */}
       <div className="absolute inset-0 z-0 bg-black flex items-center justify-center">
         {isActive ? (
           <iframe
             key={`mount-v-${video.id}`}
-            className="w-full h-full object-cover pointer-events-none md:pointer-events-auto"
+            className="w-full h-full object-cover pointer-events-none md:pointer-events-auto scale-[1.02]"
             src={`https://www.youtube.com/embed/${video.id}?autoplay=1&controls=0&modestbranding=1&rel=0&loop=1&playlist=${video.id}&showinfo=0&iv_load_policy=3&disablekb=1&enablejsapi=1&origin=${typeof window !== 'undefined' ? window.location.origin : ''}`}
             title={video.title}
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
-          ></iframe>
-        ) : (
-          <div className="flex flex-col items-center space-y-4">
-            <div className="w-10 h-10 border-2 border-white/5 border-t-white/30 rounded-full animate-spin" />
-            <p className="text-zinc-800 text-[9px] font-black uppercase tracking-widest animate-pulse">Curating Feed</p>
-          </div>
-        )}
+          />
+        ) : null}
       </div>
 
-      {/* Modern Overlays (Instagram Style) */}
-      <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black via-black/60 to-transparent pointer-events-none z-10" />
-      
-      {/* Action Rails (Right Side) */}
-      <div className="absolute right-4 bottom-24 md:bottom-32 flex flex-col items-center space-y-8 z-30">
+      {/* Cinematic Gradient Overlays */}
+      <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black via-black/40 to-transparent pointer-events-none z-10" />
+      <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/60 to-transparent pointer-events-none z-10" />
+
+      {/* Floating Action Rails */}
+      <div className="absolute right-4 bottom-32 flex flex-col items-center space-y-6 z-30">
         <motion.button
-          whileTap={{ scale: 0.8 }}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.9 }}
           onClick={toggleLike}
-          className={`flex flex-col items-center space-y-1 group pointer-events-auto`}
+          className="flex flex-col items-center group pointer-events-auto"
         >
-          <div className={`p-4 rounded-full glass border border-white/5 transition-all shadow-2xl ${liked ? "bg-[var(--accent)] text-black" : "text-white/80"}`}>
-            <Heart size={26} fill={liked ? "currentColor" : "none"} strokeWidth={2.5} />
+          <div className={`flex items-center justify-center w-14 h-14 rounded-full backdrop-blur-xl border transition-all duration-300 shadow-2xl ${liked
+            ? "bg-rose-500/20 border-rose-500/50 text-rose-500 shadow-[0_0_30px_rgba(244,63,94,0.3)]"
+            : "bg-black/40 border-white/10 text-white/80 hover:bg-white/10 hover:text-white"
+            }`}>
+            <Heart size={24} fill={liked ? "currentColor" : "none"} strokeWidth={2} />
           </div>
-          <span className="text-[10px] font-black text-white/40 group-hover:text-white transition-opacity uppercase tracking-tighter">Like</span>
+          <span className="mt-2 text-[10px] font-bold text-white/50 group-hover:text-white transition-opacity uppercase tracking-wider">
+            Like
+          </span>
         </motion.button>
-        
+
         <motion.button
-          whileTap={{ scale: 0.8 }}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.9 }}
           onClick={() => setShowInsight(!showInsight)}
-          className={`flex flex-col items-center space-y-1 group pointer-events-auto`}
+          className="flex flex-col items-center group pointer-events-auto"
         >
-          <div className={`p-4 rounded-full glass border border-white/5 text-white/80 transition-all shadow-2xl ${showInsight ? 'bg-[var(--accent)] text-black' : ''}`}>
-            <Info size={26} strokeWidth={2.5} />
+          <div className={`flex items-center justify-center w-14 h-14 rounded-full backdrop-blur-xl border transition-all duration-300 shadow-2xl ${showInsight
+            ? "bg-white text-black border-transparent"
+            : "bg-black/40 border-white/10 text-white/80 hover:bg-white/10 hover:text-white"
+            }`}>
+            <Info size={24} strokeWidth={2} />
           </div>
-          <span className="text-[10px] font-black text-white/40 group-hover:text-white transition-opacity uppercase tracking-tighter">Insight</span>
+          <span className="mt-2 text-[10px] font-bold text-white/50 group-hover:text-white transition-opacity uppercase tracking-wider">
+            Why
+          </span>
         </motion.button>
       </div>
 
-      {/* Metadata (Left Bottom) */}
-      <div className="absolute bottom-10 left-6 right-24 flex flex-col items-start space-y-4 z-20 pointer-events-none text-white">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-white/10 rounded-full border border-white/10 backdrop-blur-3xl">
-            <div className="w-1.5 h-1.5 rounded-full bg-[var(--accent)]" />
-            <span className="text-[10px] font-black uppercase tracking-widest text-zinc-100 italic">@{video.channelTitle}</span>
-          </div>
+      {/* Premium Metadata Layer */}
+      <div className="absolute bottom-12 left-6 right-24 flex flex-col items-start space-y-4 z-20 pointer-events-none">
+
+        <div className="flex items-center gap-2 px-3 py-1.5 bg-black/40 backdrop-blur-xl rounded-full border border-white/10">
+          <div className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse" />
+          <span className="text-[11px] font-semibold text-white/90 tracking-wide">
+            {video.channelTitle}
+          </span>
         </div>
-        
-        <h3 className="text-xl md:text-2xl font-black leading-tight tracking-tighter drop-shadow-2xl max-w-lg">
+
+        <h3 className="text-xl md:text-2xl font-bold leading-tight tracking-tight text-white drop-shadow-md">
           {video.title}
         </h3>
-        
-        <div className="w-full max-w-[200px] h-1 bg-white/10 rounded-full mt-2 overflow-hidden relative opacity-40">
-            {isActive && (
-                <motion.div 
-                    initial={{ x: "-100%" }}
-                    animate={{ x: "0%" }}
-                    transition={{ duration: 15, ease: "linear" }}
-                    className="h-full bg-white/60"
-                />
-            )}
+
+        {/* Sleek Progress Indicator */}
+        <div className="w-full max-w-[200px] h-1 bg-white/10 rounded-full mt-4 overflow-hidden relative backdrop-blur-md">
+          {isActive && (
+            <motion.div
+              initial={{ x: "-100%" }}
+              animate={{ x: "0%" }}
+              transition={{ duration: 15, ease: "linear" }}
+              className="h-full bg-white shadow-[0_0_10px_rgba(255,255,255,0.8)]"
+            />
+          )}
         </div>
       </div>
 
-      {/* Consolidated Insight Modal */}
+      {/* Redesigned AI Insight Dashboard Overlay */}
       <AnimatePresence>
         {showInsight && isActive && (
           <motion.div
-            initial={{ opacity: 0, y: 100 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 100 }}
-            className="absolute inset-0 z-[100] bg-black/80 backdrop-blur-3xl p-8 flex flex-col justify-center items-center text-center space-y-12"
+            initial={{ opacity: 0, backdropFilter: "blur(0px)" }}
+            animate={{ opacity: 1, backdropFilter: "blur(40px)" }}
+            exit={{ opacity: 0, backdropFilter: "blur(0px)" }}
+            className="absolute inset-0 z-[100] bg-black/60 flex flex-col justify-end p-4 md:p-6 pb-8"
           >
-            <div className="space-y-6 max-w-sm">
-                <div className="flex justify-center">
-                    <div className="p-5 rounded-[2rem] bg-[var(--accent-soft)] text-[var(--accent)] border border-[var(--accent)]/20">
-                        <Search size={48} strokeWidth={1} />
-                    </div>
-                </div>
-                <div className="space-y-2">
-                    <h4 className="text-xs font-black tracking-[0.4em] text-white/40 uppercase">Starting Prompt</h4>
-                    <p className="text-xl md:text-2xl font-bold leading-tight tracking-tight text-white italic px-4 select-none">
-                        &quot;{video.originalQuery || video.reason}&quot;
-                    </p>
-                </div>
-            </div>
-
-            {intentProfile && (
-                <div className="w-full max-w-sm space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-1000">
-                    {/* Metrics Logic */}
-                    <div className="space-y-4">
-                        <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-white/40">
-                            <span>Insight {intentProfile.goal_mix.learning * 100}%</span>
-                            <span>Engagement {intentProfile.goal_mix.entertainment * 100}%</span>
-                        </div>
-                        <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden flex">
-                            <div className="h-full bg-[var(--accent)]" style={{ width: `${intentProfile.goal_mix.learning * 100}%` }} />
-                            <div className="h-full bg-white/30" style={{ width: `${intentProfile.goal_mix.entertainment * 100}%` }} />
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="glass p-4 rounded-3xl border border-white/5 flex flex-col items-center space-y-2 group hover:bg-white/10 transition-all">
-                            <Zap className="text-[var(--accent)] opacity-70 group-hover:opacity-100 transition-opacity" size={20} />
-                            <span className="text-[10px] font-black uppercase tracking-widest text-white/40">{intentProfile.energy} Energy</span>
-                        </div>
-                        <div className="glass p-4 rounded-3xl border border-white/5 flex flex-col items-center space-y-2 group hover:bg-white/10 transition-all">
-                            <Gauge className="text-[var(--accent)] opacity-70 group-hover:opacity-100 transition-opacity" size={20} />
-                            <span className="text-[10px] font-black uppercase tracking-widest text-white/40">{intentProfile.tone} Tone</span>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            <button 
-                onClick={(e) => { e.stopPropagation(); setShowInsight(false); }}
-                className="px-10 py-4 accent-bg text-black text-xs font-semibold uppercase tracking-wide rounded-full hover:brightness-110 pointer-events-auto shadow-2xl active:scale-95 transition-all"
+            <motion.div
+              initial={{ y: 50, opacity: 0, scale: 0.95 }}
+              animate={{ y: 0, opacity: 1, scale: 1 }}
+              exit={{ y: 20, opacity: 0, scale: 0.95 }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="w-full max-w-lg mx-auto bg-[#111113]/90 border border-white/10 rounded-[2rem] p-6 md:p-8 shadow-2xl relative overflow-hidden"
             >
-                Back to Feed
-            </button>
+              {/* Decorative top gradient */}
+              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-rose-500 opacity-50" />
+
+              <div className="flex justify-between items-start mb-6">
+                <div className="flex items-center gap-2 text-indigo-400">
+                  <Sparkles size={18} />
+                  <span className="text-xs font-bold uppercase tracking-widest">AI Alignment</span>
+                </div>
+                <button
+                  onClick={() => setShowInsight(false)}
+                  className="w-8 h-8 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 transition-colors pointer-events-auto"
+                >
+                  <ChevronDown size={18} className="text-white/70" />
+                </button>
+              </div>
+
+              <div className="space-y-8">
+                {/* Intent Section */}
+                <div className="space-y-2">
+                  <p className="text-xs text-white/50 uppercase tracking-wider font-semibold">Matched Intent</p>
+                  <p className="text-lg md:text-xl font-medium leading-snug text-white/90">
+                    &quot;{video.originalQuery || video.reason}&quot;
+                  </p>
+                </div>
+
+                {/* Metrics */}
+                {intentProfile && (
+                  <div className="space-y-6 pt-6 border-t border-white/5">
+
+                    <div className="space-y-3">
+                      <div className="flex justify-between text-xs font-bold uppercase tracking-wider text-white/60">
+                        <span className="flex items-center gap-1.5"><Target size={14} className="text-indigo-400" /> Learning</span>
+                        <span className="flex items-center gap-1.5">Engagement <Activity size={14} className="text-rose-400" /></span>
+                      </div>
+                      <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden flex">
+                        <motion.div
+                          initial={{ width: 0 }} animate={{ width: `${intentProfile.goal_mix.learning * 100}%` }}
+                          transition={{ duration: 1, delay: 0.2 }}
+                          className="h-full bg-indigo-500"
+                        />
+                        <motion.div
+                          initial={{ width: 0 }} animate={{ width: `${intentProfile.goal_mix.entertainment * 100}%` }}
+                          transition={{ duration: 1, delay: 0.2 }}
+                          className="h-full bg-rose-500"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="bg-white/5 rounded-2xl p-4 border border-white/5 flex flex-col gap-1">
+                        <span className="text-[10px] uppercase tracking-widest text-white/40">Energy</span>
+                        <span className="text-sm font-semibold capitalize text-white/90">{intentProfile.energy}</span>
+                      </div>
+                      <div className="bg-white/5 rounded-2xl p-4 border border-white/5 flex flex-col gap-1">
+                        <span className="text-[10px] uppercase tracking-widest text-white/40">Tone</span>
+                        <span className="text-sm font-semibold capitalize text-white/90">{intentProfile.tone}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
-      
+
       {/* Scroll Hint */}
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 opacity-20 hidden group-hover:block transition-all">
-          <ChevronDown size={24} className="animate-bounce" />
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 opacity-30 flex flex-col items-center gap-1 pointer-events-none">
+        <span className="text-[9px] uppercase tracking-widest font-bold">Scroll</span>
+        <ChevronDown size={16} className="animate-bounce" />
       </div>
     </div>
   );

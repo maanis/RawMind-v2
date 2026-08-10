@@ -13,8 +13,9 @@ const NAV_ITEMS = [
 ];
 
 const IMMERSIVE_PREFIXES = ["/feed", "/rawmind/chat"];
+const DARK_ONLY_PREFIXES = ["/feed"];
 type ThemeMode = "light" | "dark";
-const THEME_STORAGE_KEY = "mindscroll-theme";
+const THEME_STORAGE_KEY = "rawmind-theme";
 
 function applyTheme(theme: ThemeMode) {
   if (typeof document === "undefined") {
@@ -28,6 +29,7 @@ function applyTheme(theme: ThemeMode) {
 export default function NavShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() ?? "/";
   const immersive = IMMERSIVE_PREFIXES.some((p) => pathname.startsWith(p));
+  const darkOnly = pathname === "/" || DARK_ONLY_PREFIXES.some((p) => pathname.startsWith(p));
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   const [theme, setTheme] = useState<ThemeMode>(() => {
     if (typeof window === "undefined") {
@@ -45,9 +47,14 @@ export default function NavShell({ children }: { children: React.ReactNode }) {
   });
 
   useEffect(() => {
+    if (darkOnly) {
+      applyTheme("dark");
+      return;
+    }
+
     window.localStorage.setItem(THEME_STORAGE_KEY, theme);
     applyTheme(theme);
-  }, [theme]);
+  }, [darkOnly, theme]);
 
   if (immersive) {
     return <>{children}</>;
@@ -58,10 +65,10 @@ export default function NavShell({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <div className="min-h-screen flex flex-col relative">
+    <div className="relative flex min-h-[100dvh] flex-col">
 
       {/* Main Content Area */}
-      <main className="flex-1 w-full pb-32">
+      <main className="flex-1 w-full">
         {children}
       </main>
 
@@ -69,7 +76,10 @@ export default function NavShell({ children }: { children: React.ReactNode }) {
       <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-full max-w-[fit-content] px-4 pointer-events-none">
         <motion.nav
           layout
-          className="flex items-center gap-2 p-1.5 bg-[var(--surface)]/90 backdrop-blur-xl border border-[var(--border)] rounded-full shadow-[0_20px_40px_rgba(0,0,0,0.2)] pointer-events-auto"
+          className={`flex items-center gap-2 rounded-full border p-1.5 shadow-[0_20px_40px_rgba(0,0,0,0.2)] backdrop-blur-xl pointer-events-auto ${darkOnly
+            ? "border-white/10 bg-[#131315]/90"
+            : "border-[var(--border)] bg-[var(--surface)]/90"
+            }`}
         >
           {NAV_ITEMS.map((item) => {
             const isActive = item.match(pathname);
@@ -89,7 +99,11 @@ export default function NavShell({ children }: { children: React.ReactNode }) {
                   layout
                   transition={{ type: "spring", bounce: 0.2, duration: 0.5 }}
                   className={`flex items-center justify-center gap-2 px-4 py-3 rounded-full transition-colors duration-300 ${isActive
-                      ? "bg-[var(--foreground)] text-[var(--background)]"
+                    ? darkOnly
+                      ? "bg-white text-black"
+                      : "bg-[var(--foreground)] text-[var(--background)]"
+                    : darkOnly
+                      ? "bg-transparent text-zinc-400 hover:bg-white/10 hover:text-white"
                       : "bg-transparent text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-2)]"
                     }`}
                 >
@@ -116,14 +130,16 @@ export default function NavShell({ children }: { children: React.ReactNode }) {
             );
           })}
 
-          <button
-            type="button"
-            onClick={toggleTheme}
-            aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
-            className="ml-1 flex items-center justify-center rounded-full border border-[var(--border)] bg-[var(--surface-2)] p-3 text-[var(--foreground)] transition-colors hover:bg-[var(--surface)]"
-          >
-            {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
-          </button>
+          {!darkOnly && (
+            <button
+              type="button"
+              onClick={toggleTheme}
+              aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+              className="ml-1 flex items-center justify-center rounded-full border border-[var(--border)] bg-[var(--surface-2)] p-3 text-[var(--foreground)] transition-colors hover:bg-[var(--surface)]"
+            >
+              {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
+            </button>
+          )}
         </motion.nav>
       </div>
 

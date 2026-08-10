@@ -2,7 +2,8 @@
 
 import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useState, useRef, Suspense, useCallback } from "react";
-import { ArrowLeft, Loader2, Sparkles } from "lucide-react";
+import { ArrowLeft, Loader2, Sparkles, Activity } from "lucide-react";
+import { motion } from "framer-motion";
 import VideoPlayer from "@/components/VideoPlayer";
 import InsightBar from "@/components/InsightBar";
 import { FeedSignal, FeedVideo, IntentProfile, UserProfile } from "@/lib/feed/types";
@@ -24,9 +25,21 @@ function FeedContent() {
   const [error, setError] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
   const [intentProfile, setIntentProfile] = useState<IntentProfile | null>(null);
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(() => {
+    if (typeof window === "undefined") return null;
+    const savedProfile = window.localStorage.getItem("rawmind_profile");
+    if (!savedProfile) return null;
+    try {
+      return JSON.parse(savedProfile) as UserProfile;
+    } catch {
+      return null;
+    }
+  });
   const [sessionId, setSessionId] = useState("");
-  const [deviceId, setDeviceId] = useState("");
+  const [deviceId] = useState(() => {
+    if (typeof window === "undefined") return "";
+    return getDeviceId();
+  });
   const [remainingCount, setRemainingCount] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [insightOpen, setInsightOpen] = useState(false);
@@ -36,19 +49,8 @@ function FeedContent() {
   const loadingMoreRef = useRef(false);
   const recordedWatchSignalsRef = useRef<Set<string>>(new Set());
 
-  // Persistence
   useEffect(() => {
-    setDeviceId(getDeviceId());
-    const savedProfile = localStorage.getItem("mindscroll_profile");
-    if (savedProfile) {
-      try {
-        setUserProfile(JSON.parse(savedProfile) as UserProfile);
-      } catch {}
-    }
-  }, []);
-
-  useEffect(() => {
-    if (userProfile) localStorage.setItem("mindscroll_profile", JSON.stringify(userProfile));
+    if (userProfile) localStorage.setItem("rawmind_profile", JSON.stringify(userProfile));
   }, [userProfile]);
 
   const startSession = useCallback(async () => {
@@ -93,7 +95,6 @@ function FeedContent() {
 
   const fetchNextPage = useCallback(async () => {
     if (!sessionId || !deviceId || loadingMoreRef.current || !hasMore) return;
-
     loadingMoreRef.current = true;
 
     try {
@@ -152,16 +153,16 @@ function FeedContent() {
   useEffect(() => {
     if (!containerRef.current || videos.length === 0) return;
     const observer = new IntersectionObserver((entries) => {
-        entries.forEach((entry) => {
-            if (entry.isIntersecting) {
-                setActiveIndex(parseInt(entry.target.getAttribute('data-index') || '0'));
-            }
-        });
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          setActiveIndex(parseInt(entry.target.getAttribute('data-index') || '0'));
+        }
+      });
     }, { root: containerRef.current, threshold: 0.6 });
 
     containerRef.current.querySelectorAll('[data-video-card]').forEach((el) => observer.observe(el));
     return () => observer.disconnect();
-  }, [videos.length]); 
+  }, [videos.length]);
 
   // Initial fetch
   useEffect(() => {
@@ -175,10 +176,10 @@ function FeedContent() {
 
   // Load More
   useEffect(() => {
-     if (videos.length === 0 || loading || loadingMoreRef.current || !hasMore) return;
-     if (activeIndex >= videos.length - 3 || remainingCount <= 3) {
-       void fetchNextPage();
-     }
+    if (videos.length === 0 || loading || loadingMoreRef.current || !hasMore) return;
+    if (activeIndex >= videos.length - 3 || remainingCount <= 3) {
+      void fetchNextPage();
+    }
   }, [activeIndex, videos.length, loading, hasMore, remainingCount, fetchNextPage]);
 
   const handleSignal = useCallback((videoId: string, type: 'watchTime' | 'like', value: SignalValue) => {
@@ -192,74 +193,96 @@ function FeedContent() {
     void sendSignal(signal);
   }, [sendSignal]);
 
-  // LOADING STATE
+  // Premium Loading State
   if (loading && !firstFetchComplete) {
     return (
-      <div className="flex h-screen w-full flex-col items-center justify-center space-y-4 bg-black overflow-hidden">
-        <Loader2 className="animate-spin text-[var(--accent)]/70" size={40} strokeWidth={1.5} />
-        <p className="text-white/25 text-[10px] font-medium uppercase tracking-[0.4em] animate-pulse">Curating your feed</p>
+      <div className="relative flex h-[100dvh] w-full flex-col items-center justify-center overflow-hidden bg-[#09090b] [color-scheme:dark]">
+        <motion.div
+          animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.6, 0.3] }}
+          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute w-64 h-64 bg-indigo-500/20 rounded-full blur-[80px]"
+        />
+        <div className="relative z-10 flex flex-col items-center space-y-6">
+          <div className="p-4 rounded-full bg-white/5 border border-white/10 backdrop-blur-xl">
+            <Activity className="text-white animate-pulse" size={32} />
+          </div>
+          <p className="text-white/60 text-xs font-medium uppercase tracking-[0.4em] animate-pulse">Curating your feed</p>
+        </div>
       </div>
     );
   }
 
-  // EMPTY / ERROR STATE (only show after first fetch is actually complete)
+  // Premium Empty/Error State
   if (firstFetchComplete && (error || videos.length === 0)) {
     return (
-      <div className="flex h-screen w-full flex-col items-center justify-center p-6 text-center space-y-8 bg-[#0a0a0b] overflow-hidden">
-        <div className="space-y-3">
-            <h1 className="text-white font-display text-3xl tracking-tight">No exact match found.</h1>
-            <p className="text-zinc-500 text-sm max-w-xs mx-auto">Try describing a specific mood or curiosity to help the AI align better.</p>
+      <div className="flex h-[100dvh] w-full flex-col items-center justify-center space-y-8 overflow-hidden bg-[#09090b] p-6 text-center [color-scheme:dark]">
+        <div className="p-8 rounded-[2rem] bg-white/5 border border-white/10 backdrop-blur-xl max-w-md w-full flex flex-col items-center">
+          <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center mb-6">
+            <Sparkles className="text-white/50" size={28} />
+          </div>
+          <h1 className="text-white text-2xl font-semibold tracking-tight mb-3">No exact match found.</h1>
+          <p className="text-zinc-400 text-sm mb-8 leading-relaxed">Try describing a specific mood or curiosity to help the AI align better with your intent.</p>
+          <button
+            onClick={() => router.push("/")}
+            className="w-full py-4 bg-white text-black text-sm font-semibold rounded-xl hover:bg-zinc-200 transition-colors shadow-[0_0_20px_rgba(255,255,255,0.1)]"
+          >
+            Adjust Request
+          </button>
         </div>
-        <button onClick={() => router.push("/")} className="px-10 py-3.5 accent-bg text-black text-sm font-semibold rounded-full shadow-2xl active:scale-95 transition-all">
-          Adjust Request
-        </button>
       </div>
     );
   }
 
   return (
-    <main className="relative h-screen w-full bg-black flex justify-center selection:bg-white selection:text-black">
+    <main className="relative flex h-[100dvh] w-full justify-center overflow-hidden bg-black [color-scheme:dark] selection:bg-indigo-500/30 selection:text-white">
+
       {/* Immersive Back Button */}
-      <div className="fixed top-0 left-0 z-[60] p-4 md:p-8 pointer-events-none">
-        <button onClick={() => router.push("/")} className="pointer-events-auto p-3.5 glass rounded-full text-white/60 hover:text-white transition-all shadow-2xl active:scale-90">
+      <div className="fixed top-6 left-6 z-[60]">
+        <button
+          onClick={() => router.push("/")}
+          className="flex items-center justify-center w-12 h-12 bg-black/40 backdrop-blur-xl border border-white/10 rounded-full text-white/70 hover:text-white hover:bg-white/10 transition-all shadow-2xl active:scale-95"
+        >
           <ArrowLeft size={20} />
         </button>
       </div>
 
+      {/* Edge-to-Edge Feed Container */}
       <div
         ref={containerRef}
-        className="h-full w-full overflow-y-auto no-scrollbar snap-y snap-mandatory flex flex-col items-center"
+        className="h-[100dvh] w-full overflow-y-auto no-scrollbar snap-y snap-mandatory flex flex-col"
         style={{ scrollBehavior: 'smooth' }}
       >
         {videos.map((video, idx) => {
           const isVisible = Math.abs(idx - activeIndex) <= 1;
-          
+
           return (
-            <div 
-                key={`${video.id}-${idx}`} 
-                data-video-card 
-                data-index={idx}
-                className="w-full h-full min-h-screen flex items-center justify-center snap-center relative"
+            <div
+              key={`${video.id}-${idx}`}
+              data-video-card
+              data-index={idx}
+              className="w-full h-[100dvh] flex-shrink-0 snap-center relative bg-black"
             >
               {isVisible ? (
-                 <VideoPlayer 
-                    video={video} 
-                    isActive={idx === activeIndex} 
-                    onSignal={handleSignal}
-                    intentProfile={intentProfile}
-                 />
+                <VideoPlayer
+                  video={video}
+                  isActive={idx === activeIndex}
+                  onSignal={handleSignal}
+                  intentProfile={intentProfile}
+                />
               ) : (
                 <div className="w-full h-full bg-black flex items-center justify-center">
-                    <Sparkles className="text-zinc-900 animate-pulse" size={48} strokeWidth={1.5} />
+                  <Loader2 className="text-white/20 animate-spin" size={32} />
                 </div>
               )}
             </div>
           );
         })}
-        <div className="py-20 flex flex-col items-center opacity-30 group">
-          <Sparkles className="mb-4 text-[var(--accent)]/60 transition-colors" size={26} strokeWidth={1.5} />
-          <div className="text-zinc-600 text-[10px] font-medium uppercase tracking-[0.6em]">
-            {hasMore ? "Loading more" : "You've reached the end"}
+
+        {/* End of Feed Indicator */}
+        <div className="h-[30vh] flex-shrink-0 snap-center flex flex-col items-center justify-center opacity-40">
+          <Sparkles className="mb-4 text-white/50" size={24} />
+          <div className="text-white/40 text-[10px] font-medium uppercase tracking-[0.4em]">
+            {hasMore ? "Curating more..." : "End of exploration"}
           </div>
         </div>
       </div>
@@ -278,7 +301,7 @@ function FeedContent() {
 
 export default function FeedPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-black" />}>
+    <Suspense fallback={<div className="h-[100dvh] w-full bg-[#09090b] [color-scheme:dark]" />}>
       <FeedContent />
     </Suspense>
   );
