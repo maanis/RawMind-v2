@@ -93,11 +93,10 @@ export default function RawMindSettingsPage() {
                 <button
                   key={m}
                   onClick={() => setModel(m)}
-                  className={`text-[11px] px-2.5 py-1 rounded-full border transition-colors ${
-                    m === model
+                  className={`text-[11px] px-2.5 py-1 rounded-full border transition-colors ${m === model
                       ? "border-accent text-accent"
                       : "border-border text-muted hover:border-white/20"
-                  }`}
+                    }`}
                 >
                   {m}
                 </button>
