@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Mic, ArrowUp, Loader2, Square, Rocket, Zap, Brain, Sparkles, Code2 } from "lucide-react";
+import Image from "next/image";
 
 type RecordingState = "idle" | "recording" | "transcribing";
 type SpeechRecognitionInstance = {
@@ -204,13 +205,8 @@ export default function Home() {
   const [voiceError, setVoiceError] = useState("");
   const router = useRouter();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const streamRef = useRef<MediaStream | null>(null);
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const processorRef = useRef<ScriptProcessorNode | null>(null);
-  const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
-  const audioBuffersRef = useRef<Float32Array[]>([]);
-  const sampleRateRef = useRef(44100);
-  const speechRecognitionSupportedRef = useRef(false);
+  const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
+  const recognitionTimeoutRef = useRef<number | null>(null);
 
   // Auto-resize textarea logic
   useEffect(() => {
@@ -221,15 +217,13 @@ export default function Home() {
   }, [intent]);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      speechRecognitionSupportedRef.current = Boolean(window.SpeechRecognition || window.webkitSpeechRecognition);
-    }
-
     return () => {
-      streamRef.current?.getTracks().forEach((track) => track.stop());
-      processorRef.current?.disconnect();
-      sourceRef.current?.disconnect();
-      void audioContextRef.current?.close();
+      if (recognitionTimeoutRef.current) {
+        clearTimeout(recognitionTimeoutRef.current);
+        recognitionTimeoutRef.current = null;
+      }
+      recognitionRef.current?.stop();
+      recognitionRef.current = null;
     };
   }, []);
 
@@ -246,155 +240,63 @@ export default function Home() {
     }
   };
 
-  const stopStream = () => {
-    streamRef.current?.getTracks().forEach((track) => track.stop());
-    streamRef.current = null;
+  const stopSpeechRecognition = () => {
+    if (recognitionTimeoutRef.current) {
+      clearTimeout(recognitionTimeoutRef.current);
+      recognitionTimeoutRef.current = null;
+    }
+
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+      recognitionRef.current = null;
+    }
   };
 
-  const encodeWav = (buffers: Float32Array[], sampleRate: number) => {
-    const totalLength = buffers.reduce((sum, buffer) => sum + buffer.length, 0);
-    const pcmData = new Int16Array(totalLength);
-    let offset = 0;
+  const handleVoiceInput = async () => {
+    if (voiceState === "transcribing") return;
 
-    for (const buffer of buffers) {
-      for (let index = 0; index < buffer.length; index += 1) {
-        const sample = Math.max(-1, Math.min(1, buffer[index]));
-        pcmData[offset] = sample < 0 ? sample * 0x8000 : sample * 0x7fff;
-        offset += 1;
-      }
+    if (voiceState === "recording") {
+      stopSpeechRecognition();
+      setVoiceState("idle");
+      return;
     }
 
-    const wavBuffer = new ArrayBuffer(44 + pcmData.length * 2);
-    const view = new DataView(wavBuffer);
-
-    const writeString = (position: number, value: string) => {
-      for (let index = 0; index < value.length; index += 1) {
-        view.setUint8(position + index, value.charCodeAt(index));
-      }
-    };
-
-    writeString(0, "RIFF");
-    view.setUint32(4, 36 + pcmData.length * 2, true);
-    writeString(8, "WAVE");
-    writeString(12, "fmt ");
-    view.setUint32(16, 16, true);
-    view.setUint16(20, 1, true);
-    view.setUint16(22, 1, true);
-    view.setUint32(24, sampleRate, true);
-    view.setUint32(28, sampleRate * 2, true);
-    view.setUint16(32, 2, true);
-    view.setUint16(34, 16, true);
-    writeString(36, "data");
-    view.setUint32(40, pcmData.length * 2, true);
-
-    for (let index = 0; index < pcmData.length; index += 1) {
-      view.setInt16(44 + index * 2, pcmData[index], true);
-    }
-
-    return new Blob([wavBuffer], { type: "audio/wav" });
-  };
-
-  const transcribeWithNvidia = async (audioBlob: Blob) => {
-    const formData = new FormData();
-    formData.append("audio", new File([audioBlob], "rawmind-recording.wav", { type: "audio/wav" }));
-    formData.append("language", "en");
-
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 20_000);
-    const response = await fetch("/api/transcribe", {
-      method: "POST",
-      body: formData,
-      signal: controller.signal,
-    }).finally(() => {
-      clearTimeout(timeout);
-    });
-
-    const data = (await response.json()) as { error?: string; text?: string };
-    if (!response.ok) {
-      throw new Error(data.error || "Transcription failed");
-    }
-
-    const transcript = data.text?.trim();
-    if (!transcript) {
-      throw new Error("No speech detected");
-    }
-
-    return transcript;
-  };
-
-  const transcribeWithWebSpeech = async () => {
-    const SpeechRecognitionConstructor = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognitionConstructor) {
-      throw new Error("Speech recognition is not supported in this browser");
-    }
-
-    return new Promise<string>((resolve, reject) => {
-      const recognition = new SpeechRecognitionConstructor();
-      recognition.continuous = false;
-      recognition.interimResults = false;
-      recognition.lang = "en-US";
-      let settled = false;
-      let hasResult = false;
-      const timeout = setTimeout(() => {
-        if (settled) return;
-        settled = true;
-        recognition.stop();
-        reject(new Error("Voice recognition timed out"));
-      }, 12_000);
-
-      const finish = (fn: () => void) => {
-        if (settled) return;
-        settled = true;
-        clearTimeout(timeout);
-        fn();
-      };
-
-      recognition.onresult = (event) => {
-        const transcript = event.results[0]?.[0]?.transcript?.trim() ?? "";
-        if (!transcript) {
-          finish(() => reject(new Error("No speech detected")));
-          return;
-        }
-        hasResult = true;
-        finish(() => resolve(transcript));
-      };
-
-      recognition.onerror = (event) => {
-        finish(() =>
-          reject(
-            new Error(
-              event.error === "not-allowed" ? "Microphone permission was denied" : `Voice input failed: ${event.error}`
-            )
-          )
-        );
-      };
-
-      recognition.onend = () => {
-        if (hasResult) return;
-        finish(() => reject(new Error("Speech ended before a transcript was captured. Tap mic and speak right away.")));
-      };
-
-      recognition.start();
-    });
-  };
-
-  const transcribeAudio = async (audioBlob: Blob) => {
-    if (process.env.NEXT_PUBLIC_HAS_NVIDIA === "true") {
-      try {
-        return await transcribeWithNvidia(audioBlob);
-      } catch {
-        // Falls back to browser speech recognition if NVIDIA path fails.
-      }
-    }
-    return transcribeWithWebSpeech();
-  };
-
-  const transcribeRecording = async (audioBlob: Blob) => {
-    setVoiceState("transcribing");
     setVoiceError("");
 
-    try {
-      const transcript = await transcribeAudio(audioBlob);
+    if (typeof window === "undefined") {
+      setVoiceError("Speech recognition is not available in this browser.");
+      return;
+    }
+
+    const SpeechRecognitionConstructor = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognitionConstructor) {
+      setVoiceError("Speech recognition is not supported in this browser.");
+      return;
+    }
+
+    const recognition = new SpeechRecognitionConstructor();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = "en-US";
+
+    recognitionRef.current = recognition;
+    setVoiceState("recording");
+
+    recognitionTimeoutRef.current = window.setTimeout(() => {
+      if (recognitionRef.current !== recognition) return;
+      setVoiceError("Voice recognition timed out");
+      stopSpeechRecognition();
+      setVoiceState("idle");
+    }, 12_000);
+
+    recognition.onresult = (event) => {
+      const transcript = event.results[0]?.[0]?.transcript?.trim() ?? "";
+      if (!transcript) {
+        setVoiceError("No speech detected");
+        stopSpeechRecognition();
+        setVoiceState("idle");
+        return;
+      }
 
       setIntent((previous) => {
         const nextValue = previous.trim() ? `${previous.trim()} ${transcript}` : transcript;
@@ -405,85 +307,39 @@ export default function Home() {
         textareaRef.current?.focus();
         textareaRef.current?.setSelectionRange(textareaRef.current.value.length, textareaRef.current.value.length);
       });
-    } catch (error) {
-      console.error("Voice transcription failed:", error);
-      setVoiceError(error instanceof Error ? error.message : "Unable to transcribe audio");
-    } finally {
+
+      stopSpeechRecognition();
       setVoiceState("idle");
-    }
-  };
+    };
 
-  const stopRecording = async () => {
-    if (voiceState !== "recording") return;
-
-    processorRef.current?.disconnect();
-    processorRef.current = null;
-    sourceRef.current?.disconnect();
-    sourceRef.current = null;
-    stopStream();
-    await audioContextRef.current?.close();
-    audioContextRef.current = null;
-
-    const audioBlob = encodeWav(audioBuffersRef.current, sampleRateRef.current);
-    audioBuffersRef.current = [];
-
-    if (audioBlob.size === 0) {
+    recognition.onerror = (event) => {
+      if (recognitionRef.current !== recognition) return;
+      const message =
+        event.error === "not-allowed"
+          ? "Microphone permission was denied"
+          : `Voice input failed: ${event.error}`;
+      setVoiceError(message);
+      stopSpeechRecognition();
       setVoiceState("idle");
-      setVoiceError("No audio was captured");
-      return;
-    }
+    };
 
-    await transcribeRecording(audioBlob);
-  };
-
-  const handleVoiceInput = async () => {
-    if (voiceState === "transcribing") return;
-
-    if (voiceState === "recording") {
-      await stopRecording();
-      return;
-    }
-
-    setVoiceError("");
+    recognition.onend = () => {
+      if (recognitionRef.current !== recognition) return;
+      recognitionRef.current = null;
+      if (recognitionTimeoutRef.current) {
+        clearTimeout(recognitionTimeoutRef.current);
+        recognitionTimeoutRef.current = null;
+      }
+      setVoiceState("idle");
+    };
 
     try {
-      if (typeof window === "undefined" || typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) {
-        throw new Error("Microphone access is not supported in this browser");
-      }
-
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const audioContext = new window.AudioContext({ sampleRate: 16000 });
-      const source = audioContext.createMediaStreamSource(stream);
-      const processor = audioContext.createScriptProcessor(4096, 1, 1);
-
-      streamRef.current = stream;
-      audioContextRef.current = audioContext;
-      sourceRef.current = source;
-      processorRef.current = processor;
-      audioBuffersRef.current = [];
-      sampleRateRef.current = audioContext.sampleRate;
-
-      processor.onaudioprocess = (event) => {
-        const channelData = event.inputBuffer.getChannelData(0);
-        audioBuffersRef.current.push(new Float32Array(channelData));
-      };
-
-      source.connect(processor);
-      processor.connect(audioContext.destination);
-      await audioContext.resume();
-      setVoiceState("recording");
+      recognition.start();
     } catch (error) {
       console.error("Voice capture failed:", error);
-      stopStream();
-      processorRef.current?.disconnect();
-      processorRef.current = null;
-      sourceRef.current?.disconnect();
-      sourceRef.current = null;
-      await audioContextRef.current?.close();
-      audioContextRef.current = null;
-      audioBuffersRef.current = [];
-      setVoiceState("idle");
       setVoiceError(error instanceof Error ? error.message : "Unable to access microphone");
+      stopSpeechRecognition();
+      setVoiceState("idle");
     }
   };
 
@@ -498,20 +354,21 @@ export default function Home() {
     <main className="relative flex h-[100dvh] max-h-[100dvh] min-h-0 w-full flex-col items-center justify-center overflow-hidden bg-[#09090b] px-3 pb-24 pt-3 text-zinc-100 [color-scheme:dark] selection:bg-indigo-500/30 selection:text-white sm:px-4 sm:pt-4 md:p-8">
 
       {/* Background Image Layer */}
-      <div className="absolute inset-0 z-0 pointer-events-none">
-        {/* Image */}
-        <div
-          className="absolute inset-0 bg-cover bg-center opacity-80"
-          style={{ backgroundImage: "url('/hero.png')" }}
+      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+        <Image
+          src="/hero.webp"
+          alt=""
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover object-center opacity-80"
         />
 
-        {/* Heavy film grain */}
+        {/* Film grain */}
         <div
           className="absolute inset-0 opacity-[0.35] mix-blend-overlay"
           style={{
-            backgroundImage: `
-        url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.2' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")
-      `,
+            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.2' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
             backgroundSize: "50px 50px",
           }}
         />

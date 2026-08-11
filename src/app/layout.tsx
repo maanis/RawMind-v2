@@ -6,6 +6,11 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "RawMind",
   description: "Curated video feed and persona chat, in one place.",
+  icons: {
+    icon: "/icon.png",
+    shortcut: "/icon.png",
+    apple: "/icon.png",
+  },
 };
 
 export default function RootLayout({

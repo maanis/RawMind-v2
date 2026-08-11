@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="public/logo.svg" alt="RawMind Logo" width="120" height="120" />
+  <img src="public/icon.png" alt="RawMind Logo" width="120" height="120" />
   <h1>RawMind</h1>
   <p><strong>An intent-driven AI experience for discovery, conversation, and personalized media.</strong></p>
 

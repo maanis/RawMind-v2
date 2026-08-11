@@ -14,7 +14,7 @@ export default function ProgressLock({ children }: ProgressLockProps) {
       <div aria-hidden className="absolute inset-0">
         <div
           className="absolute inset-0 scale-105 bg-cover bg-center opacity-25 blur-sm"
-          style={{ backgroundImage: "url('/hero.png')" }}
+          style={{ backgroundImage: "url('/hero.webp')" }}
         />
         <div
           className="absolute inset-0"
