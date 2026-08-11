@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowUp, Settings as SettingsIcon, Sparkles, ServerCrash,
   ChevronDown, Mic, Plus, MessageSquare, Search, PanelLeft, Code,
-  Terminal, ChevronLeft
+  Terminal, ChevronLeft, ChevronRight
 } from "lucide-react";
 import { PERSONAS, RELIGIONS, Religion } from "@/lib/rawmind/personas";
 import { loadSettings } from "@/lib/rawmind/storage";

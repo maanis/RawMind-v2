@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mic, ArrowUp, Loader2, Square, Sparkles, Rocket, Zap } from "lucide-react";
+import { Mic, ArrowUp, Loader2, Square, Rocket, Zap, Brain, Sparkles, Code2 } from "lucide-react";
 
 type RecordingState = "idle" | "recording" | "transcribing";
 type SpeechRecognitionInstance = {
@@ -487,10 +487,11 @@ export default function Home() {
     }
   };
 
+  // Inside your component:
   const suggestions = [
-    { text: "Learn startups in a fun way", icon: Rocket, color: "text-orange-400" },
-    { text: "Show something interesting", icon: Sparkles, color: "text-blue-400" },
-    { text: "Give me productive content", icon: Zap, color: "text-emerald-400" },
+    { text: "Practice DSA in a fun way", icon: Rocket, color: "text-orange-400" },
+    { text: "Learn something interesting", icon: Sparkles, color: "text-blue-400" },
+    { text: "Prepare for interviews today", icon: Zap, color: "text-emerald-400" },
   ];
 
   return (

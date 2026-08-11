@@ -13,7 +13,7 @@ const NAV_ITEMS = [
 ];
 
 const IMMERSIVE_PREFIXES = ["/feed", "/rawmind/chat"];
-const DARK_ONLY_PREFIXES = ["/feed"];
+const DARK_ONLY_PREFIXES = ["/feed", "/rawmind", "/settings"];
 type ThemeMode = "light" | "dark";
 const THEME_STORAGE_KEY = "rawmind-theme";
 

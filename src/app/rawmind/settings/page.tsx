@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { CheckCircle2, XCircle, Loader2, ExternalLink, Terminal } from "lucide-react";
+import ProgressLock from "@/components/ProgressLock";
 import { loadSettings, saveSettings } from "@/lib/rawmind/storage";
 import { OLLAMA_DEFAULT_MODEL } from "@/lib/rawmind/personas";
 
@@ -48,7 +49,8 @@ export default function RawMindSettingsPage() {
   };
 
   return (
-    <div className="min-h-screen px-6 py-10 md:py-16 max-w-2xl mx-auto space-y-10">
+    <ProgressLock>
+      <div className="min-h-screen px-6 py-10 md:py-16 max-w-2xl mx-auto space-y-10">
       <div className="space-y-2">
         <p className="text-[10px] tracking-[0.35em] uppercase text-muted">RawMind</p>
         <h1 className="font-display text-3xl tracking-tight">Connect your model</h1>
@@ -199,6 +201,7 @@ export default function RawMindSettingsPage() {
           </li>
         </ol>
       </div>
-    </div>
+      </div>
+    </ProgressLock>
   );
 }
