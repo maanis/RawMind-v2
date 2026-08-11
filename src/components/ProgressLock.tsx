@@ -50,14 +50,14 @@ export default function ProgressLock({ children }: ProgressLockProps) {
             This page is locked.
           </h1>
           <p className="mx-auto mt-4 max-w-sm text-sm leading-6 text-zinc-300">
-            RawMind is still being shaped. Till then, enjoy MindScroll on the home route.
+            RawMind is still being shaped. Till then, enjoy ScrollWise on the home screen.
           </p>
 
           <Link
             href="/"
             className="mt-7 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-white px-4 py-3 text-sm font-semibold text-black transition-colors hover:bg-zinc-200"
           >
-            Enjoy MindScroll
+            Enjoy ScrollWise
             <ArrowRight size={16} />
           </Link>
 

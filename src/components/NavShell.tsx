@@ -7,7 +7,7 @@ import { Compass, MessageCircle, Moon, Settings, Sun } from "lucide-react";
 import { useEffect, useState } from "react";
 
 const NAV_ITEMS = [
-  { href: "/", label: "MindScroll", match: (p: string) => p === "/" || p.startsWith("/feed"), icon: Compass },
+  { href: "/", label: "ScrollWise", match: (p: string) => p === "/" || p.startsWith("/feed"), icon: Compass },
   { href: "/rawmind", label: "RawMind", match: (p: string) => p.startsWith("/rawmind") && !p.startsWith("/rawmind/settings"), icon: MessageCircle },
   { href: "/rawmind/settings", label: "Settings", match: (p: string) => p.startsWith("/rawmind/settings"), icon: Settings },
 ];
