@@ -47,16 +47,26 @@ export default function VideoPlayer({ video, isActive, onSignal, intentProfile }
     <div className="relative w-full h-full bg-black overflow-hidden selection:bg-white/20 selection:text-white">
 
       {/* Video Content */}
-      <div className="absolute inset-0 z-0 bg-black flex items-center justify-center">
+      <div className="absolute inset-0 z-0 bg-black flex items-center justify-center overflow-hidden">
         {isActive ? (
           <iframe
             key={`mount-v-${video.id}`}
-            className="w-full h-full object-cover pointer-events-none md:pointer-events-auto scale-[1.02]"
+            className="pointer-events-none md:pointer-events-auto"
+            style={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              width: "100%",
+              height: "100%",
+              transform: "translate(-50%, -50%) scale(1.18)",
+              transformOrigin: "center",
+              border: 0,
+            }}
             src={`https://www.youtube.com/embed/${video.id}?autoplay=1&controls=0&modestbranding=1&rel=0&loop=1&playlist=${video.id}&showinfo=0&iv_load_policy=3&disablekb=1&enablejsapi=1&origin=${typeof window !== 'undefined' ? window.location.origin : ''}`}
             title={video.title}
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
-          />
+          ></iframe>
         ) : null}
       </div>
 
