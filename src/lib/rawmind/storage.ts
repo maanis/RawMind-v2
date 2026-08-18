@@ -10,19 +10,32 @@ export interface ChatMessage {
 export interface RawMindSettings {
   ollamaUrl: string;
   model: string;
+  /**
+   * Optional: a custom model (e.g. built from your own Modelfile with a
+   * baked-in SYSTEM prompt) used specifically for the "raw" persona. When
+   * set, the app skips sending its own system message for that persona so
+   * it doesn't override the one baked into the model.
+   */
+  rawModel: string;
 }
+
+const DEFAULT_SETTINGS: RawMindSettings = {
+  ollamaUrl: "",
+  model: "maanis/rawmind",
+  rawModel: "",
+};
 
 const SETTINGS_KEY = "rawmind_settings";
 const CHAT_PREFIX = "rawmind_chat_";
 
 export function loadSettings(): RawMindSettings {
-  if (typeof window === "undefined") return { ollamaUrl: "", model: "dolphin-mixtral" };
+  if (typeof window === "undefined") return DEFAULT_SETTINGS;
   try {
     const raw = localStorage.getItem(SETTINGS_KEY);
-    if (!raw) return { ollamaUrl: "", model: "dolphin-mixtral" };
-    return JSON.parse(raw) as RawMindSettings;
+    if (!raw) return DEFAULT_SETTINGS;
+    return { ...DEFAULT_SETTINGS, ...(JSON.parse(raw) as Partial<RawMindSettings>) };
   } catch {
-    return { ollamaUrl: "", model: "dolphin-mixtral" };
+    return DEFAULT_SETTINGS;
   }
 }
 
