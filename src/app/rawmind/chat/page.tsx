@@ -52,6 +52,15 @@ type ChatSession = {
 };
 
 const STORAGE_KEY = "rawmind_sessions";
+const USERNAME_STORAGE_KEY = "rawmind_user_name";
+
+const getTimeGreeting = (name?: string) => {
+  const hour = new Date().getHours();
+
+  if (hour < 12) return `Good morning${name ? `, ${name}` : ""}`;
+  if (hour < 17) return `Good afternoon${name ? `, ${name}` : ""}`;
+  return `Good evening${name ? `, ${name}` : ""}`;
+};
 
 const makeId = () => {
   const cryptoApi = globalThis.crypto as Crypto & { randomUUID?: () => string } | undefined;
@@ -92,6 +101,9 @@ function ChatContent() {
       return [];
     }
   });
+  const [userName, setUserName] = useState<string>("");
+  const [nameInput, setNameInput] = useState("");
+  const [isNameDialogOpen, setIsNameDialogOpen] = useState(false);
   const [input, setInput] = useState<string>(initialPrompt);
   const [streaming, setStreaming] = useState(false);
   const [error, setError] = useState("");
@@ -287,6 +299,29 @@ function ChatContent() {
   }, [input, messages, personaId, religion, streaming, saveCurrentSession]);
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const savedName = localStorage.getItem(USERNAME_STORAGE_KEY)?.trim();
+    if (savedName) {
+      setUserName(savedName);
+      return;
+    }
+
+    setUserName("");
+    setIsNameDialogOpen(true);
+  }, []);
+
+  const saveUserName = useCallback(() => {
+    const nextName = nameInput.trim();
+    if (!nextName) return;
+
+    localStorage.setItem(USERNAME_STORAGE_KEY, nextName);
+    setUserName(nextName);
+    setNameInput("");
+    setIsNameDialogOpen(false);
+  }, [nameInput]);
+
+  useEffect(() => {
     if (!initialPrompt || initialPromptSentRef.current) return;
     initialPromptSentRef.current = true;
     setInput(initialPrompt);
@@ -369,12 +404,85 @@ function ChatContent() {
   const activeSessions = sessions.filter(
     s => s.personaId === personaId && s.religion === religion
   );
+  const greeting = getTimeGreeting(userName || undefined);
 
   return (
     <div
       className="flex w-full bg-[#f3f4f6] dark:bg-[#050505] text-slate-900 dark:text-white font-sans overflow-hidden relative transition-colors duration-300"
       style={{ height: 'var(--vvp-height, 100dvh)' }}
     >
+      <AnimatePresence>
+        {isNameDialogOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/55 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ y: 20, opacity: 0, scale: 0.96 }}
+              animate={{ y: 0, opacity: 1, scale: 1 }}
+              exit={{ y: 20, opacity: 0, scale: 0.96 }}
+              transition={{ type: "spring", stiffness: 260, damping: 22 }}
+              className="w-[min(92vw,420px)] rounded-[28px] border border-slate-200 dark:border-white/10 bg-white dark:bg-[#111111] p-6 shadow-2xl"
+            >
+              <div className="mb-4 flex items-center justify-between">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.2em] text-amber-600 dark:text-amber-500 font-bold">Welcome</p>
+                  <h2 className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">What should I call you?</h2>
+                </div>
+                <div className="rounded-full bg-amber-100 dark:bg-amber-500/10 p-3 text-amber-600 dark:text-amber-400">
+                  <Brain size={22} />
+                </div>
+              </div>
+
+              <p className="mb-5 text-sm text-slate-500 dark:text-gray-400">
+                We’ll save your name on this device so the app can personalize your experience.
+              </p>
+
+              <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-gray-300">
+                Your name
+              </label>
+              <input
+                autoFocus
+                value={nameInput}
+                onChange={(e) => setNameInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    saveUserName();
+                  }
+                }}
+                placeholder="Enter your name"
+                className="w-full rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#1a1a1a] px-4 py-3 text-base text-slate-900 dark:text-white outline-none ring-0 placeholder:text-slate-400 dark:placeholder:text-gray-500 focus:border-amber-400 dark:focus:border-amber-500"
+              />
+
+              <div className="mt-6 flex justify-end gap-3">
+                <button
+                  onClick={() => {
+                    const fallback = "Friend";
+                    localStorage.setItem(USERNAME_STORAGE_KEY, fallback);
+                    setUserName(fallback);
+                    setNameInput("");
+                    setIsNameDialogOpen(false);
+                  }}
+                  className="rounded-xl border border-slate-200 dark:border-white/10 px-4 py-2 text-sm font-medium text-slate-600 dark:text-gray-300 transition hover:bg-slate-50 dark:hover:bg-white/5"
+                >
+                  Skip
+                </button>
+                <button
+                  onClick={saveUserName}
+                  disabled={!nameInput.trim()}
+                  className="rounded-xl bg-slate-900 dark:bg-white text-white dark:text-black px-4 py-2 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50 hover:bg-slate-800 dark:hover:bg-gray-200"
+                >
+                  Continue
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Sidebar Overlay for Mobile */}
       <AnimatePresence>
         {isMobile && isSidebarOpen && (
@@ -501,12 +609,12 @@ function ChatContent() {
                 <div className={`flex items-center ${isSidebarCollapsed ? 'justify-center' : 'gap-3'}`}>
                   <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-amber-400 to-amber-600 p-[2px] shrink-0">
                     <div className="w-full h-full rounded-full bg-slate-900 dark:bg-black overflow-hidden border-2 border-slate-900 dark:border-black">
-                      <img src="/FC-Logo.png" alt="Manish Jha" className="w-full h-full object-cover" />
+                      <img src="/FC-Logo.png" alt={userName || "User"} className="w-full h-full object-cover" />
                     </div>
                   </div>
                   {!isSidebarCollapsed && (
                     <div className="flex flex-col min-w-0">
-                      <span className="text-sm font-medium text-slate-900 dark:text-gray-200 truncate">Manish Jha</span>
+                      <span className="text-sm font-medium text-slate-900 dark:text-gray-200 truncate">{userName || "Friend"}</span>
                       <span className="text-[10px] text-amber-600 dark:text-amber-500 font-bold tracking-widest mt-0.5">PRO</span>
                     </div>
                   )}
@@ -526,9 +634,9 @@ function ChatContent() {
       </AnimatePresence>
 
       {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col min-w-0 relative">
+      <div className="flex-1  flex flex-col min-w-0 relative">
         {/* Header */}
-        <div className="flex items-center justify-between px-4 md:px-6 py-4 shrink-0 absolute top-0 left-0 right-0 z-10 bg-gradient-to-b from-[#f3f4f6] via-[#f3f4f6]/90 dark:from-[#050505] dark:via-[#050505]/90 to-transparent pointer-events-none transition-colors duration-300">
+        <div className="flex items-center justify-center px-4 md:px-6 py-4 shrink-0 absolute top-0 left-0 right-0 z-10 bg-gradient-to-b from-[#f3f4f6] via-[#f3f4f6]/90 dark:from-[#050505] dark:via-[#050505]/90 to-transparent pointer-events-none transition-colors duration-300">
           <div className="flex items-center gap-4 pointer-events-auto">
             {!isSidebarOpen && (
               <button
@@ -545,20 +653,20 @@ function ChatContent() {
             <span className="text-sm font-medium text-slate-800 dark:text-gray-200">RawMind {religionLabel ? `· ${religionLabel}` : ''}</span>
           </div>
 
-          <div className="flex items-center gap-3 pointer-events-auto">
-            <button className="hidden md:flex items-center gap-2 px-4 py-1.5 rounded-full border border-amber-500/30 text-amber-600 dark:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-500/10 transition-colors text-sm font-medium">
+          {/* <div className="flex items-center gap-3 pointer-events-auto"> */}
+          {/* <button className="hidden md:flex items-center gap-2 px-4 py-1.5 rounded-full border border-amber-500/30 text-amber-600 dark:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-500/10 transition-colors text-sm font-medium">
               <Crown size={16} />
               Upgrade
-            </button>
-            {/* Working Theme Toggle Button */}
-            <button
+            </button> */}
+          {/* Working Theme Toggle Button */}
+          {/* <button
               onClick={toggleTheme}
               className="p-2 rounded-full border border-slate-200 dark:border-white/10 bg-white dark:bg-transparent text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/10 transition-colors shadow-sm dark:shadow-none"
               title="Toggle Theme"
             >
               {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
-            </button>
-          </div>
+            </button> */}
+          {/* </div> */}
         </div>
 
         {/* Chat Feed */}
@@ -568,10 +676,10 @@ function ChatContent() {
             {messages.length === 0 && (
               <div className="flex flex-col items-center justify-center flex-1 mb-12 mt-12">
                 <h1 className="text-4xl md:text-5xl tracking-tight text-slate-800 dark:text-white mb-2">
-                  Good morning,
+                  {greeting.split(",")[0]}
                 </h1>
                 <h1 className="text-4xl md:text-5xl font-serif text-amber-600 dark:text-amber-500 tracking-tight mb-8">
-                  Manish
+                  {userName || "Friend"}
                 </h1>
                 <p className="text-slate-500 dark:text-gray-400 text-lg mb-8 text-center px-4">What can I help you with today?</p>
               </div>
